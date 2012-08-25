@@ -58,6 +58,8 @@ The plugin supports the following options when it is initialized for a source:
   class name has no effect.
 * __container__ can be a jQuery element of a container. If specified, elements dragged will not be able
   to move outside of that container.
+* __minimumDistance__ is the minimun distance that the user should move the mouse, before the drag starts.
+  This is useful to avoid conflicts with click/dblclick/tap/etc.
 * __canDrag__ can be a callback function that returns true or false. You can use this callback if you'd
   like to apply the plugin to a larger container, and then only make specific elements inside that
   container draggable by returning true from the callback if you've determined the current element
@@ -65,10 +67,13 @@ The plugin supports the following options when it is initialized for a source:
 * __canDrop__ can be a callback function that returns true or false. Return true if the dragged element
   can be dropped on the specified element. If this function is used, the "dropClass" setting has
   no effect.
+* __didStart__ can be a callback function that is called when the drag starts.
 * __didDrop__ can be a callback function. If specified, it is assumed to take care of all operations
   and effects to occur after a successful drag and drop has been performed. Otherwise, the default
   operation is to restore the stylesheet on the source element and if makeClone is false the
   element will be appended as a child to the droppable element.
+* __didFinish__ can be a callback function that is called when the drag finishes, even when the drop wasn't
+  accepted by the `canDrop` callback.
 
 License
 -------
