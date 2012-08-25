@@ -59,7 +59,7 @@ The plugin supports the following options when it is initialized for a source:
 * __container__ can be a jQuery element of a container. If specified, elements dragged will not be able
   to move outside of that container.
 * __minimumDistance__ is the minimun distance that the user should move the mouse, before the drag starts.
-  This is useful to avoid conflicts with click/dblclick/tap/etc.
+  This is useful to avoid conflicts with click/dblclick/tap/etc. (default: 10px)
 * __canDrag__ can be a callback function that returns true or false. You can use this callback if you'd
   like to apply the plugin to a larger container, and then only make specific elements inside that
   container draggable by returning true from the callback if you've determined the current element
