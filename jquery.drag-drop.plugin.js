@@ -8,6 +8,7 @@
         dropClass: null,
         isActive: true,
         container: null, // if set, dragging is limited to this container
+        minimumDistance: 10, // Minimum drag distance before starting drag
 
         // Default is to allow all elements to be dragged
         canDrag: function($src, event) {
@@ -30,6 +31,7 @@
     var $activeElement = null; // Element that is shown moving around during drag operation
     var $destElement = null;   // Element currently highlighted as possible drop destination
     var dragOffsetX, dragOffsetY; // Position difference from drag-point to active elements left top corner
+    var initialOffsetX, initialOffsetY; // Initial position of dragged element
     var limits;
 
     // Private helper methods
@@ -78,9 +80,13 @@
             var $element = options.canDrag($me, event);
             if ($element) {
                 $sourceElement = $element;
+                $activeElement = null;
+
+                // Store initial offset
                 var offset = $sourceElement.offset();
-                var width = $sourceElement.width();
-                var height = $sourceElement.height();
+                initialOffsetX = offset.left;
+                initialOffsetY = offset.top;
+
                 if (event.type=="touchstart") {
                     dragOffsetX = event.originalEvent.touches[0].clientX - offset.left;
                     dragOffsetY = event.originalEvent.touches[0].clientY - offset.top;
@@ -90,55 +96,62 @@
                     dragOffsetY = event.pageY - offset.top;
                 }
 
-                if (options.makeClone) {
-                    $activeElement = $sourceElement.clone(false);
-
-                    // Elements that are cloned and dragged around are added to the parent in order
-                    // to get any cascading styles applied.
-                    $activeElement.appendTo($element.parent());
-                    if (options.sourceClass)
-                        $sourceElement.addClass(options.sourceClass);
-                    else if (options.sourceHide)
-                        $sourceElement.css("visibility", "hidden");
-                }
-                else {
-                    $activeElement = $sourceElement;
-                }
-
-                $activeElement.css({
-                    position: "absolute",
-                    left: offset.left,
-                    top: offset.top,
-                    width: width,
-                    height: height
-                });
-                if (options.dragClass)
-                    $activeElement.addClass(options.dragClass);
-
-                var $c = options.container;
-                if ($c) {
-                    var offset = $c.offset();
-                    limits = {
-                        minX: offset.left,
-                        minY: offset.top,
-                        maxX: offset.left + $c.outerWidth() - $element.outerWidth(),
-                        maxY: offset.top + $c.outerHeight() - $element.outerHeight()
-                    };
-                }
-
                 $(window)
                     .bind("mousemove.dragdrop touchmove.dragdrop", { source: $me }, methods.onMove)
                     .bind("mouseup.dragdrop touchend.dragdrop", { source: $me }, methods.onEnd);
-
+                
                 event.stopPropagation();
                 return false;
             }
         },
 
-        onMove: function(event) {
-            if (!$activeElement)
-                return;
+        whenDragging: function($me) {
 
+            var options = $me.data("options");
+
+            var offset = $sourceElement.offset();
+            var width = $sourceElement.width();
+            var height = $sourceElement.height();
+
+            if (options.makeClone) {
+                $activeElement = $sourceElement.clone(false);
+
+                // Elements that are cloned and dragged around are added to the parent in order
+                // to get any cascading styles applied.
+                $activeElement.appendTo($sourceElement.parent());
+                if (options.sourceClass)
+                    $sourceElement.addClass(options.sourceClass);
+                else if (options.sourceHide)
+                    $sourceElement.css("visibility", "hidden");
+            }
+            else {
+                $activeElement = $sourceElement;
+            }
+
+            $activeElement.css({
+                position: "absolute",
+                left: offset.left,
+                top: offset.top,
+                width: width,
+                height: height
+            });
+            if (options.dragClass)
+                $activeElement.addClass(options.dragClass);
+
+            var $c = options.container;
+            if ($c) {
+                var offset = $c.offset();
+                limits = {
+                    minX: offset.left,
+                    minY: offset.top,
+                    maxX: offset.left + $c.outerWidth() - $sourceElement.outerWidth(),
+                    maxY: offset.top + $c.outerHeight() - $sourceElement.outerHeight()
+                };
+            }
+        },
+
+        onMove: function(event) {
+           
             var $me = event.data.source;
             var options = $me.data("options");
             var posX, posY;
@@ -150,6 +163,17 @@
                 posX = event.pageX;
                 posY = event.pageY;
             }
+
+            // Check for minimum drag distance, before actually dragging
+            var dragDistanceX = Math.abs(posX - initialOffsetX - dragOffsetX);
+            var dragDistanceY = Math.abs(posY - initialOffsetY - dragOffsetY);
+
+            if( !$activeElement && (dragDistanceX > options.minimumDistance || dragDistanceY > options.minimumDistance) )
+                methods.whenDragging($me);
+
+            if (!$activeElement)
+                return;
+
             $activeElement.css("display", "none");
             var destElement = document.elementFromPoint(
                 posX - document.documentElement.scrollLeft - document.body.scrollLeft,
@@ -162,6 +186,7 @@
                 posX = Math.min(Math.max(posX, limits.minX), limits.maxX);
                 posY = Math.min(Math.max(posY, limits.minY), limits.maxY);
             }
+
             $activeElement.css({ left: posX, top: posY });
 
             if (destElement) {
@@ -192,6 +217,10 @@
         },
 
         onEnd: function(event) {
+
+            $(window).unbind("mousemove.dragdrop touchmove.dragdrop");
+            $(window).unbind("mouseup.dragdrop touchend.dragdrop");
+
             if (!$activeElement)
                 return;
 
@@ -217,8 +246,6 @@
                     $activeElement.removeClass(options.dragClass);
             }
 
-            $(window).unbind("mousemove.dragdrop touchmove.dragdrop");
-            $(window).unbind("mouseup.dragdrop touchend.dragdrop");
             $sourceElement = $activeElement = limits = null;
         }
     };
@@ -235,4 +262,3 @@
         }
     };
 })(jQuery);
-
