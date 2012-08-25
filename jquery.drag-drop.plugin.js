@@ -20,9 +20,17 @@
             return $dst.hasClass("drop") || $dst.parents(".drop").size()>0;
         },
 
+        didStart: function() {
+            // Did start dragging the element.
+        },
+
         // Default is to move the element in the DOM and insert it into the element where it is dropped
         didDrop: function($src, $dst) {
             $src.appendTo($dst);
+        },
+
+        didFinish: function() {
+            // Did finish dragging the element, even when it didn't drop.
         }
     };
 
@@ -99,7 +107,7 @@
                 $(window)
                     .bind("mousemove.dragdrop touchmove.dragdrop", { source: $me }, methods.onMove)
                     .bind("mouseup.dragdrop touchend.dragdrop", { source: $me }, methods.onEnd);
-                
+
                 event.stopPropagation();
                 return false;
             }
@@ -148,10 +156,12 @@
                     maxY: offset.top + $c.outerHeight() - $sourceElement.outerHeight()
                 };
             }
+
+            options.didStart();
         },
 
         onMove: function(event) {
-           
+
             var $me = event.data.source;
             var options = $me.data("options");
             var posX, posY;
@@ -247,6 +257,7 @@
             }
 
             $sourceElement = $activeElement = limits = null;
+            options.didFinish();
         }
     };
 
