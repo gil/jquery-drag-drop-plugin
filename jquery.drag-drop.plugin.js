@@ -104,7 +104,7 @@
                     dragOffsetY = event.pageY - offset.top;
                 }
 
-                $(window)
+                $(document)
                     .bind("mousemove.dragdrop touchmove.dragdrop", { source: $me }, methods.onMove)
                     .bind("mouseup.dragdrop touchend.dragdrop", { source: $me }, methods.onEnd);
 
@@ -228,8 +228,9 @@
 
         onEnd: function(event) {
 
-            $(window).unbind("mousemove.dragdrop touchmove.dragdrop");
-            $(window).unbind("mouseup.dragdrop touchend.dragdrop");
+            $(document)
+                .unbind("mousemove.dragdrop touchmove.dragdrop")
+                .unbind("mouseup.dragdrop touchend.dragdrop");
 
             if (!$activeElement)
                 return;
